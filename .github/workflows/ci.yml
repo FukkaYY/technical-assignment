@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: technical_assignment_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d technical_assignment_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/technical_assignment_test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+          working-directory: backend
+      - run: bin/rails db:create db:schema:load
+      - name: Run RSpec
+        shell: bash
+        run: |
+          test_status=0
+          bundle exec rspec --format progress --format json --out rspec-results.json || test_status=$?
+          ruby -rjson -e '
+            result = File.exist?("rspec-results.json") ? JSON.parse(File.read("rspec-results.json")) : {}
+            result.fetch("messages", []).each do |message|
+              escaped = message.to_s.gsub("%", "%25").gsub("\r", "%0D").gsub("\n", "%0A")
+              puts "::error file=backend/spec/rails_helper.rb,line=1::#{escaped}"
+            end
+            result.fetch("examples", []).select { |example| example["status"] == "failed" }.each do |example|
+              path = "backend/#{example.fetch("file_path", "spec").sub(%r{\A\./}, "")}"
+              line = example.fetch("line_number", 1)
+              message = example.dig("exception", "message").to_s.gsub("%", "%25").gsub("\r", "%0D").gsub("\n", "%0A")
+              puts "::error file=#{path},line=#{line}::#{message}"
+            end
+          '
+          exit "$test_status"
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: docker compose up --build --detach
+      - name: Wait for the application
+        run: curl --fail --retry 40 --retry-delay 2 --retry-all-errors http://127.0.0.1:3000/api/v1/health
+      - run: docker compose exec -T backend bin/rails db:seed
+      - name: Run Playwright E2E
+        working-directory: frontend
+        shell: bash
+        run: |
+          test_status=0
+          npm run test:e2e 2>&1 | tee playwright-output.log || test_status=${PIPESTATUS[0]}
+          if [ "$test_status" -ne 0 ]; then
+            node -e '
+              const fs = require("fs");
+              const lines = fs.readFileSync("playwright-output.log", "utf8").trim().split(/\r?\n/).slice(-80);
+              const message = lines.join("\n").replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A");
+              console.log(`::error file=frontend/e2e/p0-scout-flow.spec.ts,line=1::${message}`);
+            '
+          fi
+          exit "$test_status"
+      - name: Collect container logs
+        if: failure()
+        run: |
+          mkdir -p frontend/test-results
+          docker compose logs --no-color > frontend/test-results/docker-compose.log
+      - name: Upload E2E failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-e2e-failure
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Stop application
+        if: always()
+        run: docker compose down --volumes

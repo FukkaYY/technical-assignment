@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>インターン生スカウトサービス 仕様概要</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7fb;
+      --surface: #fff;
+      --text: #172033;
+      --muted: #5f6b7a;
+      --line: #dce3ec;
+      --brand: #2856d8;
+      --brand-soft: #eaf0ff;
+      --required: #176b45;
+      --required-soft: #e7f6ee;
+      --decision: #8a4b08;
+      --decision-soft: #fff1dc;
+      font-family: Inter, "Noto Sans JP", "Yu Gothic", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--text); background: var(--bg); line-height: 1.7; }
+    a { color: var(--brand); }
+    .hero { padding: 52px 24px 44px; color: #fff; background: linear-gradient(135deg, #193b9f, #3767e8); }
+    .hero-inner, main { max-width: 1080px; margin: auto; }
+    .eyebrow { margin: 0 0 8px; font-size: .85rem; font-weight: 700; letter-spacing: .08em; opacity: .86; }
+    h1 { margin: 0; font-size: clamp(1.9rem, 5vw, 3rem); line-height: 1.25; }
+    .subtitle { max-width: 760px; margin: 14px 0 0; opacity: .92; }
+    .meta { display: flex; flex-wrap: wrap; gap: 10px 24px; margin-top: 22px; font-size: .92rem; }
+    main { padding: 28px 20px 64px; }
+    section { margin-bottom: 24px; padding: 28px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+    h2 { margin: 0 0 16px; font-size: 1.45rem; }
+    h3 { margin: 0 0 8px; font-size: 1.05rem; }
+    .lead { font-size: 1.06rem; }
+    .muted { color: var(--muted); }
+    .badge { display: inline-block; padding: .14rem .55rem; border-radius: 999px; font-size: .76rem; font-weight: 700; }
+    .required { color: var(--required); background: var(--required-soft); }
+    .decision { color: var(--decision); background: var(--decision-soft); }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .card { padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcff; }
+    .card p { margin: 0 0 12px; color: var(--muted); }
+    .card a { font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #f5f7fb; }
+    .notice { padding: 14px 16px; border-left: 4px solid var(--brand); border-radius: 8px; background: var(--brand-soft); }
+    footer { padding: 26px 20px; color: var(--muted); text-align: center; }
+    @media (max-width: 680px) {
+      section { padding: 20px; }
+      .table-wrap { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">INTERN SCOUT TECHNICAL ASSIGNMENT</p>
+      <h1>インターン生スカウトサービス 仕様概要</h1>
+      <p class="subtitle">2週間で必須フローを完成させるためのスコープと、実装時に参照する分割仕様への入口をまとめる。</p>
+      <div class="meta">
+        <span>状態: 実装・検証完了</span>
+        <span>公開概要: 本ページ</span>
+        <span>実装仕様: spec/ 配下</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>仕様の管理方針</h2>
+      <p class="lead">本ページは全体像を確認するための概要です。実装の正本は、機能別・共通領域別に分割したMarkdownです。</p>
+      <div class="notice">実装時はすべての仕様を一括で読まず、<code>spec/README.md</code>の参照表から必要なファイルだけを確認します。</div>
+    </section>
+
+    <section>
+      <h2>要件区分</h2>
+      <div class="cards">
+        <article class="card"><span class="badge required">既定</span><h3>課題文で定められた要件</h3><p>Rails、Next.js、GitHub管理、2週間、学生登録、企業から学生へのメッセージ。</p></article>
+        <article class="card"><span class="badge decision">設計判断</span><h3>本仕様で採用した内容</h3><p>企業認証、学生一覧・詳細、受信確認、データ構造、CookieセッションとCSRF保護など。</p></article>
+        <article class="card"><span class="badge">対象外</span><h3>本番公開</h3><p>本課題では公開せず、Docker ComposeとGitHub Actionsで再現性と動作を検証する。</p></article>
+      </div>
+    </section>
+
+    <section>
+      <h2>スコープ</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>優先度</th><th>機能</th></tr></thead>
+        <tbody>
+          <tr><td><strong>P0 / MVP</strong></td><td>学生登録、企業ログイン、学生一覧・詳細、企業からのメッセージ送信、学生の受信確認</td></tr>
+          <tr><td><strong>P1</strong></td><td>プロフィール編集・公開管理、学生検索・絞り込み、学生からの返信、学生側の未読管理（すべて実装済み）</td></tr>
+          <tr><td><strong>P2</strong></td><td>企業の募集掲載、予定調整（すべて実装済み）</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section>
+      <h2>現在の実装対象</h2>
+      <p>アプリのトップは「学生の方はこちら」を主な入口とし、新規登録は学生ログイン画面から案内します。「企業の方はこちら」は補助リンクとして表示します。</p>
+      <p>学生登録では姓・名を分け、学校種別と学校、大学・大学院の所属をデモ用マスターから選択します。卒業予定年は3年分の選択式とし、自己紹介は登録後に任意で追加できます。</p>
+      <p>学生としてログイン中でもトップの企業向け導線から企業ログイン画面を開き、企業アカウントへ切り替えられます。</p>
+      <p>プロフィール編集では自己PR、学生時代に力を入れたこと、研究・ゼミ内容、英語スキル、保有資格を分けて登録できます。</p>
+      <p>学生は「興味のある職種」を最大3件まで選択でき、企業はその職種を含む学生へ絞り込めます。</p>
+      <p>企業向け学生一覧は、学校種別・学校名・卒業予定年・興味のある職種による選択式の絞り込みに統一しています。</p>
+      <p>学生マイページは受信メッセージを最も目立つ上部ナビゲーションに整理し、未読メッセージと新しい面談提案を区別して、白背景・赤い左線の通知と赤背景の件数バッジで表示します。募集一覧・プロフィール編集と、赤系で区別したログアウトも配置します。</p>
+      <p>学生側の受信詳細では、面談予定がある会話だけ面談セクションを表示します。</p>
+      <p>企業はメッセージ一覧から学生ごとの過去の会話を確認できます。面談予定は15分刻みの開始日時と、15分から2時間までの所要時間を選んで提案します。</p>
+      <p class="lead">P0の主要機能と、P1・P2の計画機能は実装済みです。</p>
+      <div class="notice">学生は企業へのプロフィール公開を停止・再開でき、非公開中も既存の1対1会話と面談予定を継続利用できます。</div>
+    </section>
+
+    <section>
+      <h2>機能別仕様</h2>
+      <div class="cards">
+        <article class="card"><h3>学生登録</h3><p>姓・名の分割、学校・所属のマスター選択、3年分の卒業予定年、自動ログインと登録後の自己紹介案内。</p><a href="https://github.com/FukkaYY/technical-assignment/blob/main/spec/features/student-registration.md">仕様を開く</a></article>
+        <article class="card"><h3>企業ログイン</h3><p>再実行可能なデモseed、共通ログインAPI、ロール検証、試行制限、企業認可。</p><a href="https://github.com/FukkaYY/technical-assignment/blob/main/spec/features/company-authentication.md">仕様を開く</a></article>
+        <article class="card"><h3>学生一覧</h3><p>新着順、20件単位、公開プロフィールの検索、卒業予定年・興味のある職種の絞り込み、非公開項目。</p><a href="https://github.com/FukkaYY/technical-assignment/blob/main/spec/features/student-list.md">仕様を開く</a></article>
+        <article class="card"><h3>学生詳細</h3><p>全スキルと自己紹介全文、企業認可、404・再試行、メッセージ作成への導線。</p><a href="https://github.com/FukkaYY/technical-assignment/blob/main/spec/features/student-detail.md">仕様を開く</a></article>
+        <article class="card"><h3>メッセージ</h3><p>企業の会話一覧・送信、学生返信、双方の会話履歴、学生側の未読メッセージ・新しい面談提案の通知と確認更新、参加者ごとの認可。</p><a href="https://github.com/FukkaYY/technical-assignment/blob/main/spec/features/messaging.md">仕様を開く</a></article>
+        <article class="card"><h3>プロフィール編集</h3><p>学生本人による学校情報の更新と、5項目に分けたアピール情報の任意入力、認可と完了表示。</p><a href="https://github.com/FukkaYY/technical-assignment/blob/main/spec/features/profile-editing.md">仕様を開く</a></article>
+        <article class="card"><h3>プロフィール公開管理</h3><p>学生本人による公開停止・再公開、企業向け検索からの除外、既存会話の維持。</p><a href="https://github.com/FukkaYY/technical-assignment/blob/main/spec/features/profile-visibility.md">仕様を開く</a></article>
+        <article class="card"><h3>企業の募集掲載</h3><p>サムネイル付き募集の作成・編集・募集終了と、学生向けの「気になる！」登録・絞り込み・公開中募集詳細。</p><a href="https://github.com/FukkaYY/technical-assignment/blob/main/spec/features/job-postings.md">仕様を開く</a></article>
+        <article class="card"><h3>面談予定の調整</h3><p>既存会話での企業提案、学生への新着通知、学生の承諾・辞退、企業の取消、状態履歴。</p><a href="https://github.com/FukkaYY/technical-assignment/blob/main/spec/features/scheduling.md">仕様を開く</a></article>
+      </div>
+    </section>
+
+    <section>
+      <h2>共通仕様と設計資料</h2>
+      <div class="cards">
+        <article class="card"><h3>実装仕様ガイド</h3><p>作業ごとに読むべきファイルと更新ルール。</p><a href="https://github.com/FukkaYY/technical-assignment/blob/main/spec/README.md">入口を開く</a></article>
+        <article class="card"><h3>共通仕様</h3><p>構成、認証、認可、DB、API、バリデーション。</p><a href="https://github.com/FukkaYY/technical-assignment/tree/main/spec/shared">一覧を開く</a></article>
+        <article class="card"><h3>画面とフロー</h3><p>画面一覧、正常系・認証エラー・権限エラーの流れ。</p><a href="https://github.com/FukkaYY/technical-assignment/tree/main/spec/ui">一覧を開く</a></article>
+        <article class="card"><h3>テスト</h3><p>P0受け入れ条件とレイヤー別テスト方針。</p><a href="https://github.com/FukkaYY/technical-assignment/tree/main/spec/testing">一覧を開く</a></article>
+        <article class="card"><h3>Decision Log</h3><p>採用した判断、理由、未確定論点。</p><a href="https://github.com/FukkaYY/technical-assignment/blob/main/spec/decisions/decision-log.md">判断記録を開く</a></article>
+      </div>
+    </section>
+
+    <section>
+      <h2>公開上の注意</h2>
+      <p class="notice">本番公開は現在の提出範囲に含めません。将来公開する場合は、配置方式とセキュリティ設定を改めて設計・検証します。</p>
+      <ul>
+        <li>認証情報、個人情報、秘密鍵、実在ユーザーのデータをコミットしない。</li>
+        <li>公開意図が確認できない外部URLを掲載しない。</li>
+        <li>環境変数の実値はコミットせず、サンプルにはダミー値だけを置く。</li>
+      </ul>
+      <p class="muted">詳細な変更履歴はGitのコミット履歴とDecision Logで管理します。</p>
+    </section>
+  </main>
+
+  <footer>インターン生スカウトサービス — 仕様概要</footer>
+</body>
+</html>
